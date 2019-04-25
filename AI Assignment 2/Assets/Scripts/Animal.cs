@@ -1,10 +1,11 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Animal : MonoBehaviour
 {
-	public enum animalState {Wander, FindFood, FindWater, Eat, Drink, Sleep, FindMate, Mate};
+	public enum animalState {Wander, FindFood, FindWater, Eat, Drink, Sleep};
 
 	public int hunger;
 	public int thirst;
@@ -20,7 +21,7 @@ public class Animal : MonoBehaviour
 	}
 
 	private void Update() {
-		targetPos = new Vector3(Mathf.Clamp(targetPos.x, -8, 8), Mathf.Clamp(targetPos.y, -5, 5), 0);
+		targetPos = new Vector3(Mathf.Clamp(targetPos.x, -7.5f, 7.5f), Mathf.Clamp(targetPos.y, -4.5f, 4.5f), 0);
 		transform.position = Vector3.MoveTowards(transform.position, targetPos, speed * Time.deltaTime);
 
 		if (transform.position == targetPos && state == animalState.Wander) {
@@ -52,9 +53,11 @@ public class Animal : MonoBehaviour
 			if (Random.value*100 < thirst/2) {
 				state = animalState.FindWater;
 				StartCoroutine(UpdateState());
-			}
-			if (Random.value * 100 < hunger / 2) {
+			} else if (Random.value * 100 < hunger / 2) {
 				state = animalState.FindFood;
+				StartCoroutine(UpdateState());
+			} else if (Random.value * 100 < tiredness / 2) {
+				state = animalState.Sleep;
 				StartCoroutine(UpdateState());
 			} else {
 				targetPos = new Vector3(Random.Range(transform.position.x - wanderRange, transform.position.x + wanderRange), 
@@ -77,6 +80,7 @@ public class Animal : MonoBehaviour
 
 		//Drink
 		if (state == animalState.Drink) {
+			targetPos = transform.position;
 			yield return new WaitForSeconds(3);
 			thirst = 0;
 			state = animalState.Wander;
@@ -98,10 +102,28 @@ public class Animal : MonoBehaviour
 
 		//Eat
 		if (state == animalState.Eat) {
+			targetPos = transform.position;
 			yield return new WaitForSeconds(3);
 			hunger = 0;
 			state = animalState.Wander;
 			StartCoroutine(UpdateState());
 		}
+
+		//Sleep
+		if (state == animalState.Sleep) {
+			targetPos = transform.position;
+			yield return new WaitForSeconds(10);
+			tiredness = 0;
+			state = animalState.Wander;
+			StartCoroutine(UpdateState());
+		}
+	}
+
+	void OnMouseOver() {
+		GameObject.Find("HoverText").GetComponent<Text>().text = "State: " + state.ToString() + "\nHunger: " + hunger.ToString() + "\nThirst: " + thirst.ToString() + "\nTiredness: " + tiredness.ToString();
+	}
+
+	void OnMouseExit() {
+		GameObject.Find("HoverText").GetComponent<Text>().text = "";
 	}
 }
