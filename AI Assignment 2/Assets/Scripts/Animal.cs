@@ -34,6 +34,12 @@ public class Animal : MonoBehaviour
 			targetPos = transform.position;
 			StartCoroutine(UpdateState());
 		}
+
+		if (collider.gameObject.tag == "Food" && state == animalState.FindFood) {
+			state = animalState.Eat;
+			targetPos = transform.position;
+			StartCoroutine(UpdateState());
+		}
 	}
 
 	public IEnumerator UpdateState() {
@@ -46,6 +52,10 @@ public class Animal : MonoBehaviour
 			if (Random.value*100 < thirst/2) {
 				state = animalState.FindWater;
 				StartCoroutine(UpdateState());
+			}
+			if (Random.value * 100 < hunger / 2) {
+				state = animalState.FindFood;
+				StartCoroutine(UpdateState());
 			} else {
 				targetPos = new Vector3(Random.Range(transform.position.x - wanderRange, transform.position.x + wanderRange), 
 										Random.Range(transform.position.y - wanderRange, transform.position.y + wanderRange), 0);
@@ -54,19 +64,42 @@ public class Animal : MonoBehaviour
 
 		//FindWater
 		if (state == animalState.FindWater) {
-			float dist1 = Vector3.Distance(GameObject.FindGameObjectsWithTag("Water")[0].transform.position, transform.position);
-			float dist2 = Vector3.Distance(GameObject.FindGameObjectsWithTag("Water")[1].transform.position, transform.position);
-			if (dist1 < dist2) {
-				targetPos = GameObject.FindGameObjectsWithTag("Water")[0].transform.position;
-			} else {
-				targetPos = GameObject.FindGameObjectsWithTag("Water")[1].transform.position;
+			GameObject closest = GameObject.FindGameObjectsWithTag("Water")[0];
+			foreach (GameObject go in GameObject.FindGameObjectsWithTag("Water")) {
+				float dist = Vector3.Distance(go.transform.position, transform.position);
+				if (dist <= Vector3.Distance(closest.transform.position, transform.position)) {
+					closest = go;
+				}
 			}
+
+			targetPos = closest.transform.position;
 		}
 
 		//Drink
 		if (state == animalState.Drink) {
 			yield return new WaitForSeconds(3);
 			thirst = 0;
+			state = animalState.Wander;
+			StartCoroutine(UpdateState());
+		}
+
+		//FindFood
+		if (state == animalState.FindFood) {
+			GameObject closest = GameObject.FindGameObjectsWithTag("Food")[0];
+			foreach (GameObject go in GameObject.FindGameObjectsWithTag("Food")) {
+				float dist = Vector3.Distance(go.transform.position, transform.position);
+				if (dist <= Vector3.Distance(closest.transform.position, transform.position)) {
+					closest = go;
+				}
+			}
+
+			targetPos = closest.transform.position;
+		}
+
+		//Eat
+		if (state == animalState.Eat) {
+			yield return new WaitForSeconds(3);
+			hunger = 0;
 			state = animalState.Wander;
 			StartCoroutine(UpdateState());
 		}
